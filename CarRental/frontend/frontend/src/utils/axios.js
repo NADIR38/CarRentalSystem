@@ -1,8 +1,11 @@
 import axios from "axios";
 import { getAccessToken, setAccessToken, clearAccessToken } from "../Auth/tokenStore";
 
+// Use environment variable for API URL
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:7051/api";
+
 const api = axios.create({
-  baseURL: "https://localhost:7051/api",
+  baseURL: API_BASE_URL,
   withCredentials: true
 });
 
@@ -22,7 +25,7 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       try {
         const res = await axios.post(
-          "https://localhost:7051/api/auth/refresh",
+          `${API_BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         );

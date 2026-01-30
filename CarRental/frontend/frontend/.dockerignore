@@ -1,0 +1,9 @@
+## Step 5: Create .dockerignore
+
+
+node_modules
+dist
+.git
+.env.local
+.env.development
+npm-debug.log
