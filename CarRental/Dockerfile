@@ -14,8 +14,6 @@ RUN dotnet publish "Backend.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 
-ENV ASPNETCORE_URLS=http://+:8080
-
 # Copy published files from build stage
 COPY --from=build /app/publish .
 
