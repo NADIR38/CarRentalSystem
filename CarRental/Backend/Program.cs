@@ -18,24 +18,43 @@ builder.Services.AddScoped<PasswordService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<RefreshTokensService>();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// Build connection string from environment variables DIRECTLY
+var mysqlHost = Environment.GetEnvironmentVariable("MYSQLHOST");
+var mysqlPort = Environment.GetEnvironmentVariable("MYSQLPORT");
+var mysqlDatabase = Environment.GetEnvironmentVariable("MYSQLDATABASE");
+var mysqlUser = Environment.GetEnvironmentVariable("MYSQLUSER");
+var mysqlPassword = Environment.GetEnvironmentVariable("MYSQLPASSWORD");
+
+// Build the connection string
+var connectionString = $"Server={mysqlHost};Port={mysqlPort};Database={mysqlDatabase};User={mysqlUser};Password={mysqlPassword};";
+
+// Log connection attempt (for debugging)
+Console.WriteLine($"Connecting to MySQL at {mysqlHost}:{mysqlPort}");
+
 builder.Services.AddDbContext<ApplicatinDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
+
+// CORS Configuration
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
         policy =>
         {
             policy.WithOrigins(
-                "http://localhost:5173", // Local development
-                "https://car-rental-dusky-nine.vercel.app" // Production Vercel frontend
+                "http://localhost:5173",
+                "https://car-rental-dusky-nine.vercel.app"
             )
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
         });
 });
+
+// JWT configuration
+var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "12345678901234567890123456789012";
+var jwtIssuer = "CarRentalAPI";
+var jwtAudience = "CarRentalClient";
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
@@ -45,33 +64,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-             Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
-         )
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
-
-builder.Services.AddAuthorization();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-// Remove HTTPS redirection for Railway (Railway handles SSL at the edge)
-// app.UseHttpsRedirection();
-
-app.UseCors("AllowReactApp");
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
-
-app.Run();
