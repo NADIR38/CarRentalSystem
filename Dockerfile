@@ -1,13 +1,13 @@
-﻿# Stage 1: Build
+# Stage 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy csproj and restore dependencies
-COPY Backend/Backend.csproj ./
+COPY CarRental/Backend/Backend.csproj ./
 RUN dotnet restore "Backend.csproj"
 
 # Copy all source files
-COPY Backend/ ./
+COPY CarRental/Backend/ ./
 RUN dotnet publish "Backend.csproj" -c Release -o /app/publish
 
 # Stage 2: Runtime
