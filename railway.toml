@@ -1,0 +1,7 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "CarRental/Dockerfile"
+buildContext = "CarRental"
+
+[deploy]
+startCommand = "dotnet Backend.dll"
