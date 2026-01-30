@@ -22,15 +22,14 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicatinDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
         policy =>
         {
             policy.WithOrigins(
-                "http://localhost:5173", // React app URL for local development
-                "https://your-frontend-domain.com" // Add your production frontend URL here
+                "http://localhost:5173", // Local development
+                "https://car-rental-dusky-nine.vercel.app" // Production Vercel frontend
             )
                   .AllowAnyHeader()
                   .AllowAnyMethod()
