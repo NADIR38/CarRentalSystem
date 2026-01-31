@@ -1,13 +1,13 @@
-﻿using System.Security.Cryptography;
+﻿    using System.Security.Cryptography;
 
-namespace Backend.Security
-{
-    public class RefreshTokensService
+    namespace Backend.Security
     {
-        public string GenerateRefreshTokes()
+        public class RefreshTokensService
         {
-            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-        }
+            public string GenerateRefreshTokes()
+            {
+                return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            }
 
+        }
     }
-}
