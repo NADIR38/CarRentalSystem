@@ -18,22 +18,44 @@ builder.Services.AddScoped<PasswordService>();
 builder.Services.AddScoped<JwtService>();
 builder.Services.AddScoped<RefreshTokensService>();
 
-// Build connection string from environment variables DIRECTLY
+// Build connection string from environment variables
 var mysqlHost = Environment.GetEnvironmentVariable("MYSQLHOST");
 var mysqlPort = Environment.GetEnvironmentVariable("MYSQLPORT");
 var mysqlDatabase = Environment.GetEnvironmentVariable("MYSQLDATABASE");
 var mysqlUser = Environment.GetEnvironmentVariable("MYSQLUSER");
 var mysqlPassword = Environment.GetEnvironmentVariable("MYSQLPASSWORD");
 
+// Log environment variables (without password)
+Console.WriteLine($"MYSQLHOST: {mysqlHost}");
+Console.WriteLine($"MYSQLPORT: {mysqlPort}");
+Console.WriteLine($"MYSQLDATABASE: {mysqlDatabase}");
+Console.WriteLine($"MYSQLUSER: {mysqlUser}");
+Console.WriteLine($"MYSQLPASSWORD: {(string.IsNullOrEmpty(mysqlPassword) ? "NOT SET" : "SET")}");
+
+// Validate environment variables
+if (string.IsNullOrEmpty(mysqlHost) || string.IsNullOrEmpty(mysqlPort) || 
+    string.IsNullOrEmpty(mysqlDatabase) || string.IsNullOrEmpty(mysqlUser))
+{
+    throw new Exception("Required MySQL environment variables are not set");
+}
+
 // Build the connection string
 var connectionString = $"Server={mysqlHost};Port={mysqlPort};Database={mysqlDatabase};User={mysqlUser};Password={mysqlPassword};";
 
-// Log connection attempt (for debugging)
-Console.WriteLine($"Connecting to MySQL at {mysqlHost}:{mysqlPort}");
+Console.WriteLine($"Attempting to connect to MySQL at {mysqlHost}:{mysqlPort}");
 
-builder.Services.AddDbContext<ApplicatinDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
-);
+try
+{
+    builder.Services.AddDbContext<ApplicatinDbContext>(options =>
+        options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+    );
+    Console.WriteLine("DbContext configured successfully");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error configuring DbContext: {ex.Message}");
+    throw;
+}
 
 // CORS Configuration
 builder.Services.AddCors(options =>
@@ -56,6 +78,8 @@ var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "12345678901234
 var jwtIssuer = "CarRentalAPI";
 var jwtAudience = "CarRentalClient";
 
+Console.WriteLine($"JWT_SECRET: {(string.IsNullOrEmpty(jwtKey) ? "NOT SET" : "SET")}");
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -69,3 +93,27 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
     };
 });
+
+builder.Services.AddAuthorization();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+Console.WriteLine("Application built successfully");
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors("AllowReactApp");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+Console.WriteLine($"Starting application on port {port}");
+
+app.Run();
