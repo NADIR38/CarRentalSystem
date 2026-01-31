@@ -101,6 +101,22 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 Console.WriteLine("Application built successfully");
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicatinDbContext>();
+        Console.WriteLine("Applying database migrations...");
+        context.Database.Migrate();
+        Console.WriteLine("Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error applying migrations: {ex.Message}");
+        throw;
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
